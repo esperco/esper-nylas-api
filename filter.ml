@@ -8,19 +8,19 @@ type page = [
 type email = [
     page
   | `Subject   of string
-  | `Any_email of Nylas_t.email
-  | `To        of Nylas_t.email
-  | `From      of Nylas_t.email
-  | `Cc        of Nylas_t.email
-  | `Bcc       of Nylas_t.email
-  | `Tag       of Nylas_t.tag_id
+  | `Any_email of Nylas_api_t.email
+  | `To        of Nylas_api_t.email
+  | `From      of Nylas_api_t.email
+  | `Cc        of Nylas_api_t.email
+  | `Bcc       of Nylas_api_t.email
+  | `Tag       of Nylas_api_t.tag_id
   | `Filename  of string
 ]
 
 (** Filters that apply only to messages and not threads. *)
 type message = [
     email
-  | `Thread_id of Nylas_t.thread_id
+  | `Thread_id of Nylas_api_t.thread_id
 ]
 
 (** Filters that apply only to threads and not messages. *)
@@ -35,8 +35,8 @@ type thread = [
 (** Filters for retrieving multiple calendar events. *)
 type event = [
     page
-  | `Event_id      of Nylas_t.event_id
-  | `Calendar_id   of Nylas_t.calendar_id
+  | `Event_id      of Nylas_api_t.event_id
+  | `Calendar_id   of Nylas_api_t.calendar_id
   | `Title         of string
   | `Description   of string
   | `Location      of string

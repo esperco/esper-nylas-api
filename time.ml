@@ -1,4 +1,4 @@
-open Nylas_t
+open Nylas_api_t
 
 exception Malformed_time of [ time_type | `Some_time ]
 

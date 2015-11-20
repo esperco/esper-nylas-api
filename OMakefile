@@ -1,0 +1,22 @@
+OCAML_LIBS = $(OCAML_LIBS_nylas-api)
+
+FILES[] =
+  json
+  nylas_api_t
+  nylas_api_j
+  nylas_api_v
+  time
+  nylas
+  nylas_app
+  filter
+  multipart
+
+Atdgen(nylas_api, -j-std)
+OCamlLibrary(nylas-api, $(FILES))
+Meta(nylas-api)
+
+.DEFAULT: META nylas-api.cma nylas-api.cmxa
+
+.PHONY: clean
+clean:
+  rm -f *.o *.a *.cm* *~ *.annot *.run *.opt META $(ATDGEN_OUTFILES)
