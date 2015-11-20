@@ -1,3 +1,8 @@
+(**
+   Nylas API client.
+   Full documentation is at https://nylas.com/docs/platform
+*)
+
 exception Error_code of Cohttp.Code.status_code
 
 val authentication_uri : Nylas_app.t -> string -> Uri.t -> Uri.t
