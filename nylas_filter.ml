@@ -46,6 +46,12 @@ type event = [
   | `Ends_after    of int
 ]
 
+type file = [
+  | `Filename     of string
+  | `Message_id   of string
+  | `Content_type of string
+]
+
 let to_param = function
   | `Limit n                  -> ("limit", string_of_int n)
   | `Offset n                 -> ("offset", string_of_int n)
@@ -75,6 +81,9 @@ let to_param = function
   | `Starts_after time        -> ("starts_after", string_of_int time)
   | `Ends_before time         -> ("ends_before", string_of_int time)
   | `Ends_after time          -> ("ends_after", string_of_int time)
+
+  | `Content_type ct          -> ("content_type", ct)
+  | `Message_id msgid         -> ("message_id", msgid)
 
 let add_query filters uri =
   Uri.add_query_params' uri (List.map to_param filters)

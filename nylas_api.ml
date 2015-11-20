@@ -102,18 +102,15 @@ let get_message ~access_token ~app message_id =
   let uri = api_path app ("/messages/" ^ message_id) in
   call_parse ~access_token `GET Nylas_api_j.message_of_string uri
 
-(** Returns the rfc2822 message, which is encoded as a base-64 string. *)
 let get_raw_message_64 ~access_token ~app message_id =
   let uri = api_path app ("/messages/" ^ message_id ^ "/rfc2822") in
   call_parse ~access_token `GET Nylas_api_j.message_raw_of_string uri
 
-(** Gets the raw message as a normal string. *)
 let get_raw_message ~access_token ~app message_id =
   get_raw_message_64 ~access_token ~app message_id >>= function
   | None -> return None
   | Some { mr_rfc2822 } -> return (Some (Base64.decode mr_rfc2822))
 
-(** Gets the raw message and parses it into a `complex_mime_message'. *)
 let get_raw_message_mime ~access_token ~app message_id =
   get_raw_message ~access_token ~app message_id >>= function
   | None -> return None
@@ -122,7 +119,6 @@ let get_raw_message_mime ~access_token ~app message_id =
         new Nlstream.input_stream (new Nlchannels.input_string str) in
       return (Some (Nlmime.read_mime_message input))
 
-(** Gets the global Message-id, if one exists. *)
 let get_message_id_mime ~access_token ~app message_id =
   get_raw_message_mime ~access_token ~app message_id >>= function
   | None -> return None
@@ -136,7 +132,6 @@ let get_message_id_mime ~access_token ~app message_id =
 let get_thread_messages ~access_token ~app thread =
   get_messages ~access_token ~app [`Thread_id thread.tr_id]
 
-(** Sends a message, creating a new thread. *)
 let send_new_message ~access_token ~app message =
   let body = Nylas_api_j.string_of_message_edit message in
   let uri = api_path app "/send" in
@@ -156,17 +151,11 @@ let create_draft ~access_token ~app message =
   let uri = api_path app "/drafts" in
   call_parse ~access_token ~body `POST Nylas_api_j.draft_of_string uri
 
-(** Create a draft with the given message, replying to the specified
- *  thread. This clears the message's subject, because messages
- *  replying to a thread have their subject set automatically by the
- *  Nylas API.
- *)
 let reply_draft ~access_token ~app thread_id message =
   let message =
     { message with me_subject = None; me_thread_id = Some thread_id } in
   create_draft ~access_token ~app message
 
-(** Updates the *latest version* of the given file. *)
 let update_draft ~access_token ~app draft_id draft_edit =
   get_draft ~access_token ~app draft_id >>= function
   | None -> return None
@@ -176,7 +165,6 @@ let update_draft ~access_token ~app draft_id draft_edit =
       let uri = api_path app ("/drafts/" ^ draft_id) in
       call_parse ~access_token ~body `PUT Nylas_api_j.draft_of_string uri
 
-(** Deletes the latest version of the specified draft. *)
 let delete_draft ~access_token ~app draft_id =
   get_draft ~access_token ~app draft_id >>= function
   | None -> return None
@@ -203,10 +191,6 @@ let get_files ~access_token ~app filters =
   in
   call_parse ~access_token `GET Nylas_api_j.file_list_of_string uri
 
-(** Takes Nylas file metadata and produces a "part" for a multipart
- *  request that contains the necessary Content-Disposition and
- *  Content-Type headers.
- *)
 let part_of_file content_type filename content =
   {
     Nylas_multipart.headers = [
