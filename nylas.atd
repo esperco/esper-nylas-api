@@ -1,0 +1,352 @@
+(* Core types for the Inbox API *)
+
+(* TODO: wrapper types for ids and such *)
+type thread_id            = string
+type account_id           = string
+type tag_id               = string
+type message_id           = string
+type draft_id             = string
+type file_id              = string
+type calendar_id          = string
+type event_id             = string
+type event_participant_id = string
+
+type access_token = string
+
+(* TODO: If there is a finite set of providers, turn this into a variant. *)
+type provider = string
+
+type email = string
+
+type timestamp = int
+
+(** The object you get when you authenticate, containing the
+    access_token and/or error information. *)
+type authentication_result = {
+  ?access_token : access_token option;
+  ?error        : string option;
+  ?reason       : string option;
+  email_address : string;
+}
+
+(** An annotation that specifies what type of object the returned
+    JSON represents. *)
+type object_type = [
+    Thread <json name="thread">
+  | Message <json name="message">
+  | Draft <json name="draft">
+  | Account <json name="account">
+  | Calendar <json name="calendar">
+  | Event <json name="event">
+  | Time <json name="time">
+  | Timespan <json name="timespan">
+  | Datespan <json name="datespan">
+  | Date <json name="date">
+  | File <json name="file">
+]
+
+(** These are the types specific to "when" fields. *)
+type time_type = [
+    Time <json name="time">
+  | Timespan <json name="timespan">
+  | Datespan <json name="datespan">
+  | Date <json name="date">
+]
+
+type event_status = [
+    Confirmed <json name="confirmed">
+  | Tentative <json name="tentative">
+  | Cancelled <json name="cancelled">
+]
+
+type reply_status = [
+    Yes <json name="yes">
+  | No <json name="no">
+  | Maybe <json name="maybe">
+  | NoReply <json name="noreply">
+]
+
+type draft_version = string
+
+type draft_state = [
+    Draft <json name="draft">
+  | Sending <json name="sending">
+  | Sent <json name="sent">
+]
+
+type account = {
+  id                        : account_id;
+  ?obj <json name="object"> : object_type option;
+  account_id                : account_id;
+  email_address             : email;
+  provider                  : provider;
+  name                      : string
+} <ocaml field_prefix="ns_">
+
+type participant = {
+  name  : string;
+  email : email
+} <ocaml field_prefix="pa_">
+
+type tag = {
+  name : string;
+  id   : tag_id
+} <ocaml field_prefix="ta_">
+
+type thread = {
+  id                        : thread_id;
+  ?obj <json name="object"> : object_type option;
+  account_id                : account_id;
+  subject                   : string;
+  last_message_timestamp    : timestamp;
+  first_message_timestamp   : timestamp;
+  participants              : participant list;
+  snippet                   : string;
+  tags                      : tag list;
+  message_ids               : message_id list;
+  draft_ids                 : draft_id list
+} <ocaml field_prefix="tr_">
+
+type thread_list = thread list
+
+type file = {
+  ?obj <json name="object"> : object_type option;
+  ?content_type             : string option;
+  ~filename                 : string;
+  id                        : file_id;
+  ?size                     : int option
+} <ocaml field_prefix="fi_">
+
+type file_list = file list
+
+type message = {
+  id                        : message_id;
+  ?obj <json name="object"> : object_type option;
+  ~subject                  : string;
+  ~from                     : participant list;
+  ~to_ <json name="to">     : participant list;
+  ~cc                       : participant list;
+  ~bcc                      : participant list;
+  date                      : timestamp;
+  thread_id                 : thread_id;
+  ~files                    : file list;
+  ~snippet                  : string;
+  ~body                     : string;
+  ~unread                   : bool
+} <ocaml field_prefix="ms_">
+
+type message_list = message list
+
+(** An object that specifies a message to create or update---it has no id. *)
+type message_edit = {
+  ?subject              : string option;
+  ~to_ <json name="to"> : participant list;
+  ~cc                   : participant list;
+  ~bcc                  : participant list;
+  ~body                 : string;
+  ~file_ids             : file_id list;
+  ?thread_id            : thread_id option
+} <ocaml field_prefix="me_">
+
+(** An object that only contains the body of an email message, encoded
+ *  as a base 64 string.
+ *)
+type message_raw = {
+  rfc2822 : string
+} <ocaml field_prefix="mr_">
+
+type draft = {
+  id                        : draft_id;
+  ?obj <json name="object"> : object_type option;
+  ~subject                  : string;
+  ~from                     : participant list;
+  ~to_ <json name="to">     : participant list;
+  ~cc                       : participant list;
+  ~bcc                      : participant list;
+  date                      : timestamp;
+  thread_id                 : thread_id;
+  ~files                    : file list;
+  ~snippet                  : string;
+  ~body                     : string;
+  ~unread                   : bool;
+
+  (* draft-specific fields *)
+  version                   : draft_version;
+  ?state                     : draft_state option;
+} <ocaml field_prefix="dr_">
+
+type draft_list = draft list
+
+type draft_edit = {
+  ?subject              : string option;
+  ~from                 : participant list;
+  ~to_ <json name="to"> : participant list;
+  ~cc                   : participant list;
+  ~bcc                  : participant list;
+  ~file_ids             : file_id list;
+  ?snippet              : string option;
+  ?body                 : string option;
+  ?unread               : bool option;
+  ?version              : draft_version option;
+} <ocaml field_prefix="de_">
+
+(** A command to send a draft, comprised of the idea nd version to
+ *  send.
+ *)
+type draft_send = {
+  draft_id : draft_id;
+  version  : draft_version;
+} <ocaml field_prefix="ds_">
+
+(** The object that specifies which version of a draft to delete in a
+ *  DELETE request.
+ *)
+type draft_delete = {
+  version : draft_version
+} <ocaml field_prefix="dd_">
+
+type calendar = {
+  ?description              : string option;
+  ~event_ids                : event_id list;
+  id                        : calendar_id;
+  name                      : string;
+  account_id                : account_id;
+  ?obj <json name="object"> : object_type option;
+  read_only                 : bool
+} <ocaml field_prefix="ca_">
+
+type calendar_list = calendar list
+
+(* TODO: Figure out a better representation? Maybe. *)
+type day = string
+
+type event_participant = {
+  ?email  : email option;
+  ?id    : event_participant_id option;
+  ?name   : string option;
+  status : reply_status;
+} <ocaml field_prefix="ep_">
+
+type time = {
+  ?obj <json name="object"> : object_type option;
+  (* TODO: Use a specific time type. *)
+  time                      : int;
+} <ocaml field_prefix="t_">
+
+type timespan = {
+  ?obj <json name="object"> : object_type option;
+  (* TODO                   : Use a specific time type. *)
+  start_time                : int;
+  end_time                  : int;
+} <ocaml field_prefix="ts_">
+
+type date = {
+  ?obj <json name="object"> : object_type option;
+  start_date                : day
+} <ocaml field_prefix="d_">
+
+type datespan = {
+  ?obj <json name="object"> : object_type option;
+  start_date                : day;
+  end_date                  : day;
+} <ocaml field_prefix="ds_">
+
+(** The four possible time objects, neatly sanitized. *)
+type times = [
+    Time of time <json name="time">
+  | Timespan of timespan <json name="timespan">
+  | Datespan of datespan <json name="datespan">
+  | Date of date <json name="date">
+]
+
+(** This type captures times, timespans, dates and datespans all in
+ *  one. Right now, it's a bit awkward until we get good support for
+ *  parsing this sort of "sum of products" case, like dsheet's PR does for
+ *  products of sums.
+ *)
+type some_time = {
+  ?obj <json name="object"> : time_type option;
+  ?time                     : int option;
+  ?start_time               : int option;
+  ?end_time                 : int option;
+  ?date                     : day option;
+  ?start_date               : day option;
+  ?end_date                 : day option;
+} <ocaml field_prefix="st_">
+
+type event = {
+  ?obj <json name="object"> : object_type option;
+  id                        : event_id;
+  calendar_id               : calendar_id;
+  account_id                : account_id;
+  ?description              : string option;
+  ?location                 : string option;
+  ~participants             : event_participant list;
+  ~read_only                : bool;
+  ?recurrence               : recurrence option;
+  ?master_event_id          : event_id option;
+  ?original_start_time      : int option;
+  ?status                   : event_status option;
+  ?title                    : string option;
+  when_ <json name="when">  : some_time
+} <ocaml field_prefix="ev_">
+
+type recurrence = {
+  ~rrule : string list;
+  ?timezone : string option;
+} <ocaml field_prefix="re_">
+
+type event_list = event list
+
+type event_edit = {
+  ?calendar_id              : calendar_id option;
+  ?description              : string option;
+  ?location                 : string option;
+  ?participants             : participant list option;
+  ?title                    : string option;
+  ?when_ <json name="when"> : some_time option;
+} <ocaml field_prefix="ew_">
+
+type cursor = string
+
+(* Initial delta sync request. *)
+type start_time = {
+  start : timestamp;
+}
+
+(* Initial delta sync response. *)
+type cursor_response = {
+  cursor : cursor;
+}
+
+(* A page of deltas, starting from a cursor value we supply.
+   We can use cursor_end as the starting value for the next page,
+   until we get a response where cursor_start = cursor_end. *)
+type delta_page = {
+  cursor_start : cursor;
+  cursor_end : cursor;
+  ~deltas : delta list;
+}
+
+type delta_event = [
+  | Create <json name="create">
+  | Modify <json name="modify">
+  | Delete <json name="delete">
+]
+
+(* An change event that occurred on an Inbox resource. *)
+type delta = {
+  cursor : cursor; (* The cursor value for this delta. *)
+  event : delta_event;
+  obj <json name="object"> : object_type;
+  id : string;
+    (* The ID of the changed object. Its wrapper type depends on
+       the object_type, so we use string here. *)
+  ?attributes : json option;
+    (* The state of the object when the delta was generated. *)
+}
+
+(* XXX Remove when we know what the contents of the "attributes"
+       field above will be, probably based on the "type" field.
+       The documentation is not very clear here. *)
+type json <ocaml module="Json"> = abstract
