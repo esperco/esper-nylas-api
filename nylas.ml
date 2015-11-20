@@ -83,7 +83,7 @@ let get_account ~access_token ~app =
 (* Threads *)
 let get_threads ~access_token ~app filters =
   let uri =
-    Filter.add_query filters (api_path app "/threads")
+    Nylas_filter.add_query filters (api_path app "/threads")
   in
   call_parse ~access_token `GET Nylas_api_j.thread_list_of_string uri
 
@@ -94,7 +94,7 @@ let get_thread ~access_token ~app thread_id =
 (* Message *)
 let get_messages ~access_token ~app filters =
   let uri =
-    Filter.add_query filters (api_path app "/messages")
+    Nylas_filter.add_query filters (api_path app "/messages")
   in
   call_parse ~access_token `GET Nylas_api_j.message_list_of_string uri
 
@@ -199,7 +199,7 @@ let send_draft ~access_token ~app draft =
 (* Files *)
 let get_files ~access_token ~app filters =
   let uri =
-    Filter.add_query filters (api_path app "/files")
+    Nylas_filter.add_query filters (api_path app "/files")
   in
   call_parse ~access_token `GET Nylas_api_j.file_list_of_string uri
 
@@ -209,7 +209,7 @@ let get_files ~access_token ~app filters =
  *)
 let part_of_file content_type filename content =
   {
-    Multipart.headers = [
+    Nylas_multipart.headers = [
       ("Content-Disposition",
        "form-data; name=\"" ^ filename ^ "\"; filename=\"" ^ filename ^ "\"");
       ("Content-Type", content_type)
@@ -219,7 +219,8 @@ let part_of_file content_type filename content =
 
 let upload_file ~access_token ~app content_type filename content =
   let file_part = part_of_file content_type filename content in
-  let (header, body) = Multipart.request_of_parts "form-data" [file_part] in
+  let (header, body) =
+    Nylas_multipart.request_of_parts "form-data" [file_part] in
   let headers = [
       header;
   ]
@@ -268,7 +269,7 @@ let get_event ~access_token ~app event_id =
 
 let get_events ~access_token ~app filters =
   let uri =
-    Filter.add_query filters (api_path app "/events")
+    Nylas_filter.add_query filters (api_path app "/events")
   in
   call_parse ~access_token `GET Nylas_api_j.event_list_of_string uri
 

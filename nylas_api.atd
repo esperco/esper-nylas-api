@@ -349,4 +349,4 @@ type delta = {
 (* XXX Remove when we know what the contents of the "attributes"
        field above will be, probably based on the "type" field.
        The documentation is not very clear here. *)
-type json <ocaml module="Json"> = abstract
+type json <ocaml module="Nylas_json"> = abstract

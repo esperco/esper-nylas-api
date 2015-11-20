@@ -1,15 +1,15 @@
 OCAML_LIBS = $(OCAML_LIBS_nylas-api)
 
 FILES[] =
-  json
+  nylas_json
   nylas_api_t
   nylas_api_j
   nylas_api_v
-  time
+  nylas_time
   nylas
   nylas_app
-  filter
-  multipart
+  nylas_filter
+  nylas_multipart
 
 Atdgen(nylas_api, -j-std)
 OCamlLibrary(nylas-api, $(FILES))
