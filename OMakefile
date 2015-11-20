@@ -6,10 +6,10 @@ FILES[] =
   nylas_api_j
   nylas_api_v
   nylas_time
-  nylas
-  nylas_app
   nylas_filter
   nylas_multipart
+  nylas_app
+  nylas_api
 
 Atdgen(nylas_api, -j-std)
 OCamlLibrary(nylas-api, $(FILES))

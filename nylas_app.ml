@@ -1,4 +1,4 @@
-(** Contains the basic configuration details for an Inbox app. A
+(** Contains the basic configuration details for a Nylas app. A
  *  self-hosted one needs to specify the api_uri and base_uri
  *  as well as the secrets.
  *)
