@@ -283,6 +283,7 @@ type event = {
   ?location                 : string option;
   ~participants             : event_participant list;
   ~read_only                : bool;
+  ~busy                     : bool;
   ?recurrence               : recurrence option;
   ?master_event_id          : event_id option;
   ?original_start_time      : int option;
