@@ -44,6 +44,8 @@ type event = [
   | `Starts_after  of int
   | `Ends_before   of int
   | `Ends_after    of int
+  | `Expand_recurring of bool
+  | `Show_canceled    of bool
 ]
 
 type file = [
