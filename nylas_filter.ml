@@ -81,6 +81,8 @@ let to_param = function
   | `Starts_after time        -> ("starts_after", string_of_int time)
   | `Ends_before time         -> ("ends_before", string_of_int time)
   | `Ends_after time          -> ("ends_after", string_of_int time)
+  | `Expand_recurring b       -> ("expand_recurring", string_of_bool b)
+  | `Show_canceled b          -> ("show_canceled", string_of_bool b)
 
   | `Content_type ct          -> ("content_type", ct)
   | `Message_id msgid         -> ("message_id", msgid)
