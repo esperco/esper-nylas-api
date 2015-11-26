@@ -133,7 +133,6 @@ val get_calendar :
   access_token:string ->
   app:Nylas_app.t -> string -> Nylas_api_t.calendar option Lwt.t
 
-
 val get_event :
   access_token:string ->
   app:Nylas_app.t -> string -> Nylas_api_t.event option Lwt.t
