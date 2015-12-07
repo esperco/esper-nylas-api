@@ -16,15 +16,21 @@ let api_uri  = Uri.of_string "https://api.nylas.com"
 
 let api_path { api_uri } path = Uri.with_path api_uri path
 
-let authentication_uri app user_email redirect_uri =
+let authentication_uri ?state app user_email redirect_uri =
   let uri = Uri.with_path app.api_uri "oauth/authorize" in
-  Uri.add_query_params' uri [
-    ("client_id", app.app_id);
-    ("response_type", "code");
-    ("scope", "email");
-    ("login_hint", user_email);
-    ("redirect_uri", Uri.to_string redirect_uri)
-  ]
+  let state =
+    match state with
+    | None -> []
+    | Some x -> [ "state", x]
+  in
+  let required_param = [
+    "client_id", app.app_id;
+    "response_type", "code";
+    "scope", "email";
+    "login_hint", user_email;
+    "redirect_uri", Uri.to_string redirect_uri;
+  ] in
+  Uri.add_query_params' uri (required_param @ state)
 
 let call_string http_method ?access_token ?headers ?body uri =
   let headers = match headers with | Some h -> h | None -> [] in

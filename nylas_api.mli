@@ -5,7 +5,9 @@
 
 exception Error_code of Cohttp.Code.status_code
 
-val authentication_uri : Nylas_app.t -> string -> Uri.t -> Uri.t
+val authentication_uri :
+  ?state:string ->
+  Nylas_app.t -> string -> Uri.t -> Uri.t
 
 val post_authentication_code :
   Nylas_app.t -> string -> Nylas_api_t.authentication_result option Lwt.t
