@@ -277,7 +277,9 @@ type some_time = {
 type event = {
   ?obj <json name="object"> : object_type option;
   id                        : event_id;
-  calendar_id               : calendar_id;
+  ~calendar_id              : calendar_id;
+    (* found null for instances of recurring events 2015-12-08.
+       Working around the bug by defaulting to the empty string. *)
   account_id                : account_id;
   ?description              : string option;
   ?location                 : string option;
