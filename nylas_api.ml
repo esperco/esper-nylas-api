@@ -244,6 +244,11 @@ let send_with_file ~access_token ~app message content_type filename content =
               | None -> return None
               | x -> return x
 
+(* Contacts APIs *)
+let get_contacts ~access_token ~app =
+  let uri = api_path app "/contacts" in
+  call_parse ~access_token `GET Nylas_api_j.contact_list_of_string uri
+
 (* Calendar APIs *)
 let get_calendars ~access_token ~app =
   let uri = api_path app "/calendars" in

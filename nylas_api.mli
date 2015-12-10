@@ -127,6 +127,10 @@ val send_with_file :
   Nylas_api_t.message_edit ->
   string -> string -> string -> Nylas_api_t.draft option Lwt.t
 
+val get_contacts :
+  access_token:string ->
+  app:Nylas_app.t -> Nylas_api_t.contact_list option Lwt.t
+
 val get_calendars :
   access_token:string ->
   app:Nylas_app.t -> Nylas_api_t.calendar_list option Lwt.t

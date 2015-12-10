@@ -43,6 +43,7 @@ type object_type = [
   | Datespan <json name="datespan">
   | Date <json name="date">
   | File <json name="file">
+  | Contact <json name="contact">
 ]
 
 (** These are the types specific to "when" fields. *)
@@ -348,6 +349,16 @@ type delta = {
   ?attributes : json option;
     (* The state of the object when the delta was generated. *)
 }
+
+type contact = {
+  name: string;
+  email: email;
+  id: string;
+  account_id: account_id;
+  object: object_type;
+} <ocaml field_prefix="ncon_">
+
+type contact_list = contact list
 
 (* XXX Remove when we know what the contents of the "attributes"
        field above will be, probably based on the "type" field.
