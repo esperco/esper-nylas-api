@@ -251,11 +251,6 @@ let get_contacts ~access_token ~app filters =
   in
   call_parse ~access_token `GET Nylas_api_j.contact_list_of_string uri
 
-(* match the Google Contacts format *)
-let get_contacts_url ~access_token ~app string_url =
-  let uri = Uri.of_string string_url in
-  call_parse ~access_token `GET Nylas_api_j.contact_list_of_string uri
-
 (* Calendar APIs *)
 let get_calendars ~access_token ~app =
   let uri = api_path app "/calendars" in

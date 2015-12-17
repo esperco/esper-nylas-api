@@ -132,11 +132,6 @@ val get_contacts :
   app:Nylas_app.t ->
   Nylas_filter.page list -> Nylas_api_t.contact_list option Lwt.t
 
-val get_contacts_url :
-  access_token:string ->
-  app:Nylas_app.t ->
-  string -> Nylas_api_t.contact_list option Lwt.t
-
 val get_calendars :
   access_token:string ->
   app:Nylas_app.t -> Nylas_api_t.calendar_list option Lwt.t
