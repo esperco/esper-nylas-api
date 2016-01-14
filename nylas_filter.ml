@@ -1,3 +1,5 @@
+type timestamp = float
+
 (** Limit and offset are used to paginate results. *)
 type page = [
     `Limit  of int
@@ -26,10 +28,10 @@ type message = [
 (** Filters that apply only to threads and not messages. *)
 type thread = [
     email
-  | `Last_message_before of int
-  | `Last_message_after  of int
-  | `Started_before      of int
-  | `Started_after       of int
+  | `Last_message_before of timestamp
+  | `Last_message_after  of timestamp
+  | `Started_before      of timestamp
+  | `Started_after       of timestamp
 ]
 
 (** Filters for retrieving multiple calendar events. *)
@@ -40,10 +42,10 @@ type event = [
   | `Title         of string
   | `Description   of string
   | `Location      of string
-  | `Starts_before of int
-  | `Starts_after  of int
-  | `Ends_before   of int
-  | `Ends_after    of int
+  | `Starts_before of timestamp
+  | `Starts_after  of timestamp
+  | `Ends_before   of timestamp
+  | `Ends_after    of timestamp
   | `Expand_recurring of bool
   | `Show_canceled    of bool
 ]
@@ -54,7 +56,9 @@ type file = [
   | `Content_type of string
 ]
 
-let to_param = function
+let to_param filter =
+  let timestamp x = Printf.sprintf "%.0f" x in
+  match filter with
   | `Limit n                  -> ("limit", string_of_int n)
   | `Offset n                 -> ("offset", string_of_int n)
 
@@ -69,20 +73,20 @@ let to_param = function
 
   | `Thread_id id             -> ("thread_id", id)
 
-  | `Last_message_before time -> ("last_message_before", string_of_int time)
-  | `Last_message_after time  -> ("last_message_after", string_of_int time)
-  | `Started_before time      -> ("started_before", string_of_int time)
-  | `Started_after time       -> ("started_after", string_of_int time)
+  | `Last_message_before time -> ("last_message_before", timestamp time)
+  | `Last_message_after time  -> ("last_message_after", timestamp time)
+  | `Started_before time      -> ("started_before", timestamp time)
+  | `Started_after time       -> ("started_after", timestamp time)
 
   | `Event_id id              -> ("event_id", id)
   | `Calendar_id id           -> ("calendar_id", id)
   | `Title title              -> ("title", title)
   | `Description description  -> ("description", description)
   | `Location location        -> ("location", location)
-  | `Starts_before time       -> ("starts_before", string_of_int time)
-  | `Starts_after time        -> ("starts_after", string_of_int time)
-  | `Ends_before time         -> ("ends_before", string_of_int time)
-  | `Ends_after time          -> ("ends_after", string_of_int time)
+  | `Starts_before time       -> ("starts_before", timestamp time)
+  | `Starts_after time        -> ("starts_after", timestamp time)
+  | `Ends_before time         -> ("ends_before", timestamp time)
+  | `Ends_after time          -> ("ends_after", timestamp time)
   | `Expand_recurring b       -> ("expand_recurring", string_of_bool b)
   | `Show_canceled b          -> ("show_canceled", string_of_bool b)
 
