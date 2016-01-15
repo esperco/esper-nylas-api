@@ -32,8 +32,7 @@ let authentication_uri ?state app user_email redirect_uri =
   ] in
   Uri.add_query_params' uri (required_param @ state)
 
-let call_string http_method ?access_token ?headers ?body uri =
-  let headers = match headers with | Some h -> h | None -> [] in
+let call_string http_method ?access_token ?(headers=[]) ?body uri =
   let headers = match access_token with
     | Some token ->
        ("Authorization", ("Basic " ^ Base64.encode (token ^ ":")))::headers
@@ -142,6 +141,12 @@ let send_new_message ~access_token ~app message =
   let body = Nylas_api_j.string_of_message_edit message in
   let uri = api_path app "/send" in
   call_parse ~access_token ~body `POST Nylas_api_j.message_of_string uri
+
+let send_new_raw_message ~access_token ~app body =
+  let uri = api_path app "/send" in
+  let headers = ["Content-Type", "message/rfc822"] in
+  call_parse ~access_token ~headers ~body `POST
+    Nylas_api_j.message_of_string uri
 
 (* Drafts *)
 let get_drafts ~access_token ~app =

@@ -62,6 +62,12 @@ val send_new_message :
   app:Nylas_app.t ->
   Nylas_api_t.message_edit -> Nylas_api_t.message option Lwt.t
 
+(** Sends a message in raw MIME. *)
+val send_new_raw_message :
+  access_token:string ->
+  app:Nylas_app.t ->
+  string -> Nylas_api_t.message option Lwt.t
+
 val get_drafts :
   access_token:string ->
   app:Nylas_app.t -> Nylas_api_t.draft_list option Lwt.t
