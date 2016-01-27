@@ -243,7 +243,7 @@ type timespan = {
 
 type date = {
   ?obj <json name="object"> : object_type option;
-  start_date                : day
+  date                      : day
 } <ocaml field_prefix="d_">
 
 type datespan = {
