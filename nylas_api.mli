@@ -157,7 +157,7 @@ val get_events :
 
 val create_event :
   access_token:string ->
-  app:Nylas_app.t -> Nylas_api_t.event_edit -> Nylas_api_t.event option Lwt.t
+  app:Nylas_app.t -> Nylas_api_t.event_edit -> Nylas_api_t.event Lwt.t
 
 val update_event :
   access_token:string ->

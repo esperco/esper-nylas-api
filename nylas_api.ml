@@ -1,3 +1,4 @@
+open Log
 open Lwt
 open Cohttp
 open Cohttp.Code
@@ -51,13 +52,17 @@ let call_string http_method ?access_token ?(headers=[]) ?body uri =
       Cohttp_lwt_body.to_string body >>= fun s ->
       Printf.eprintf "Nylas API call succeeded with response: %s\n%!" s;
       return (Some s)
+  | `Not_found, _ ->
+      return None
+  | `Bad_request, _ ->
+      failwith "Bad Nylas request"
   | err, body ->
       Cohttp_lwt_body.to_string body >>= fun s ->
-      Printf.eprintf "Nylas API call failed with error %d: %s\n%!"
+      logf `Error "Nylas API call failed with error %d: %s\n%!"
         (Cohttp.Code.code_of_status err) s;
-      return None
+      Http_exn.service_unavailable "3rd-party service is unavailable"
 
-let call_parse http_method parse_fn ?access_token ?headers ?body uri =
+let call_parse_opt http_method parse_fn ?access_token ?headers ?body uri =
   let body = match body with
     | None      -> None
     | Some body -> Some (Cohttp_lwt_body.of_string body)
@@ -65,6 +70,15 @@ let call_parse http_method parse_fn ?access_token ?headers ?body uri =
   call_string ?access_token ?headers ?body http_method uri >>= function
   | None -> return None
   | Some response -> return (Some (parse_fn response))
+
+let call_parse http_method parse_fn ?access_token ?headers ?body uri =
+  let body = match body with
+    | None      -> None
+    | Some body -> Some (Cohttp_lwt_body.of_string body)
+  in
+  call_string ?access_token ?headers ?body http_method uri >>= function
+  | None -> Http_exn.not_found "Resource not found"
+  | Some response -> return (parse_fn response)
 
 let post_authentication_code app code =
   (* NOTE: The leading slash in /oauth/token is necessary. *)
@@ -76,11 +90,11 @@ let post_authentication_code app code =
       ("code", code)
     ]
   in
-  call_parse `POST Nylas_api_j.authentication_result_of_string uri
+  call_parse_opt `POST Nylas_api_j.authentication_result_of_string uri
 
 let get_account ~access_token ~app =
   let uri = api_path app "/account" in
-  call_parse ~access_token `GET Nylas_api_j.account_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.account_of_string uri
 
 
 (* Email APIs *)
@@ -90,26 +104,26 @@ let get_threads ~access_token ~app filters =
   let uri =
     Nylas_filter.add_query filters (api_path app "/threads")
   in
-  call_parse ~access_token `GET Nylas_api_j.thread_list_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.thread_list_of_string uri
 
 let get_thread ~access_token ~app thread_id =
   let uri = api_path app ("/threads/" ^ thread_id) in
-  call_parse ~access_token `GET Nylas_api_j.thread_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.thread_of_string uri
 
 (* Message *)
 let get_messages ~access_token ~app filters =
   let uri =
     Nylas_filter.add_query filters (api_path app "/messages")
   in
-  call_parse ~access_token `GET Nylas_api_j.message_list_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.message_list_of_string uri
 
 let get_message ~access_token ~app message_id =
   let uri = api_path app ("/messages/" ^ message_id) in
-  call_parse ~access_token `GET Nylas_api_j.message_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.message_of_string uri
 
 let get_raw_message_64 ~access_token ~app message_id =
   let uri = api_path app ("/messages/" ^ message_id ^ "/rfc2822") in
-  call_parse ~access_token `GET Nylas_api_j.message_raw_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.message_raw_of_string uri
 
 let get_raw_message ~access_token ~app message_id =
   get_raw_message_64 ~access_token ~app message_id >>= function
@@ -140,27 +154,27 @@ let get_thread_messages ~access_token ~app thread =
 let send_new_message ~access_token ~app message =
   let body = Nylas_api_j.string_of_message_edit message in
   let uri = api_path app "/send" in
-  call_parse ~access_token ~body `POST Nylas_api_j.message_of_string uri
+  call_parse_opt ~access_token ~body `POST Nylas_api_j.message_of_string uri
 
 let send_new_raw_message ~access_token ~app body =
   let uri = api_path app "/send" in
   let headers = ["Content-Type", "message/rfc822"] in
-  call_parse ~access_token ~headers ~body `POST
+  call_parse_opt ~access_token ~headers ~body `POST
     Nylas_api_j.message_of_string uri
 
 (* Drafts *)
 let get_drafts ~access_token ~app =
   let uri = api_path app "/drafts" in
-  call_parse ~access_token `GET Nylas_api_j.draft_list_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.draft_list_of_string uri
 
 let get_draft ~access_token ~app draft_id =
   let uri = api_path app ("/drafts/" ^ draft_id) in
-  call_parse ~access_token `GET Nylas_api_j.draft_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.draft_of_string uri
 
 let create_draft ~access_token ~app message =
   let body = Nylas_api_j.string_of_message_edit message in
   let uri = api_path app "/drafts" in
-  call_parse ~access_token ~body `POST Nylas_api_j.draft_of_string uri
+  call_parse_opt ~access_token ~body `POST Nylas_api_j.draft_of_string uri
 
 let reply_draft ~access_token ~app thread_id message =
   let message =
@@ -174,7 +188,7 @@ let update_draft ~access_token ~app draft_id draft_edit =
       let draft_edit = { draft_edit with de_version = Some dr_version } in
       let body = Nylas_api_j.string_of_draft_edit draft_edit in
       let uri = api_path app ("/drafts/" ^ draft_id) in
-      call_parse ~access_token ~body `PUT Nylas_api_j.draft_of_string uri
+      call_parse_opt ~access_token ~body `PUT Nylas_api_j.draft_of_string uri
 
 let delete_draft ~access_token ~app draft_id =
   get_draft ~access_token ~app draft_id >>= function
@@ -184,7 +198,7 @@ let delete_draft ~access_token ~app draft_id =
       let dd =
         Nylas_api_v.create_draft_delete ~dd_version:draft.dr_version () in
       let body = Nylas_api_j.string_of_draft_delete dd in
-      call_parse ~access_token ~body `DELETE (fun x -> x) uri
+      call_parse_opt ~access_token ~body `DELETE (fun x -> x) uri
 
 let send_draft ~access_token ~app draft =
   let body = Nylas_api_j.string_of_draft_send {
@@ -193,14 +207,14 @@ let send_draft ~access_token ~app draft =
   }
   in
   let uri = api_path app "/send" in
-  call_parse ~access_token ~body `POST Nylas_api_j.draft_of_string uri
+  call_parse_opt ~access_token ~body `POST Nylas_api_j.draft_of_string uri
 
 (* Files *)
 let get_files ~access_token ~app filters =
   let uri =
     Nylas_filter.add_query filters (api_path app "/files")
   in
-  call_parse ~access_token `GET Nylas_api_j.file_list_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.file_list_of_string uri
 
 let part_of_file content_type filename content =
   {
@@ -221,7 +235,7 @@ let upload_file ~access_token ~app content_type filename content =
   ]
   in
   let uri = api_path app "/files/" in
-  call_parse
+  call_parse_opt
     ~access_token ~headers ~body `POST Nylas_api_j.file_list_of_string uri
 
 let attach_file ~access_token ~app file_id draft_id =
@@ -254,26 +268,26 @@ let get_contacts ~access_token ~app filters =
   let uri =
     Nylas_filter.add_query filters (api_path app "/contacts")
   in
-  call_parse ~access_token `GET Nylas_api_j.contact_list_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.contact_list_of_string uri
 
 (* Calendar APIs *)
 let get_calendars ~access_token ~app =
   let uri = api_path app "/calendars" in
-  call_parse ~access_token `GET Nylas_api_j.calendar_list_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.calendar_list_of_string uri
 
 let get_calendar ~access_token ~app calendar_id=
   let uri = api_path app ("/calendars/" ^ calendar_id) in
-  call_parse ~access_token `GET Nylas_api_j.calendar_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.calendar_of_string uri
 
 let get_event ~access_token ~app event_id =
   let uri = api_path app ("/events/" ^ event_id) in
-  call_parse ~access_token `GET Nylas_api_j.event_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.event_of_string uri
 
 let get_events ~access_token ~app filters =
   let uri =
     Nylas_filter.add_query filters (api_path app "/events")
   in
-  call_parse ~access_token `GET Nylas_api_j.event_list_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.event_list_of_string uri
 
 let create_event ~access_token ~app event_edit =
   let uri = api_path app "/events" in
@@ -283,17 +297,17 @@ let create_event ~access_token ~app event_edit =
 let update_event ~access_token ~app event_id event_edit =
   let uri = api_path app ("/events/" ^ event_id) in
   let body = Nylas_api_j.string_of_event_edit event_edit in
-  call_parse ~access_token ~body `PUT Yojson.Safe.from_string uri
+  call_parse_opt ~access_token ~body `PUT Yojson.Safe.from_string uri
 
 let delete_event ~access_token ~app event_id =
   let uri = api_path app ("/events/" ^ event_id) in
-  call_parse ~access_token `DELETE Yojson.Safe.from_string uri
+  call_parse_opt ~access_token `DELETE Yojson.Safe.from_string uri
 
 (* Delta Sync *)
 let delta_sync_start ~access_token ~app timestamp =
   let uri = api_path app "/delta/generate_cursor" in
   let body = Nylas_api_j.string_of_start_time { start = timestamp } in
-  call_parse
+  call_parse_opt
     ~access_token ~body `POST Nylas_api_j.cursor_response_of_string uri
 
 let delta_sync_update ~access_token ~app ?(exclude = []) cursor =
@@ -305,4 +319,4 @@ let delta_sync_update ~access_token ~app ?(exclude = []) cursor =
       let filter = String.concat "," exclude in
       Uri.add_query_params' with_cursor ["exclude_types", filter]
   in
-  call_parse ~access_token `GET Nylas_api_j.delta_page_of_string uri
+  call_parse_opt ~access_token `GET Nylas_api_j.delta_page_of_string uri

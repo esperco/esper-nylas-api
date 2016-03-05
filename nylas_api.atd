@@ -18,7 +18,11 @@ type provider = string
 
 type email = string
 
-type timestamp = int
+type timestamp = float wrap <ocaml t="Util_time.t"
+                                   wrap="Util_time.of_float"
+                                   unwrap="Util_time.to_float">
+
+type date_only = string wrap <ocaml module="Util_dateonly">
 
 (** The object you get when you authenticate, containing the
     access_token and/or error information. *)
@@ -218,38 +222,35 @@ type calendar = {
 
 type calendar_list = calendar list
 
-(* TODO: Figure out a better representation? Maybe. *)
-type day = string
-
 type event_participant = {
-  ?email  : email option;
-  ?id    : event_participant_id option;
-  ?name   : string option;
+  ?email : email option;
+  ?id : event_participant_id option;
+  ?name : string option;
   status : reply_status;
 } <ocaml field_prefix="ep_">
 
 type time = {
   ?obj <json name="object"> : object_type option;
   (* TODO: Use a specific time type. *)
-  time                      : int;
+  time                      : timestamp;
 } <ocaml field_prefix="t_">
 
 type timespan = {
   ?obj <json name="object"> : object_type option;
   (* TODO                   : Use a specific time type. *)
-  start_time                : int;
-  end_time                  : int;
+  start_time                : timestamp;
+  end_time                  : timestamp;
 } <ocaml field_prefix="ts_">
 
 type date = {
   ?obj <json name="object"> : object_type option;
-  date                      : day
+  date                      : date_only
 } <ocaml field_prefix="d_">
 
 type datespan = {
   ?obj <json name="object"> : object_type option;
-  start_date                : day;
-  end_date                  : day;
+  start_date                : date_only;
+  end_date                  : date_only;
 } <ocaml field_prefix="ds_">
 
 (** The four possible time objects, neatly sanitized. *)
@@ -267,12 +268,12 @@ type times = [
  *)
 type some_time = {
   ?obj <json name="object"> : time_type option;
-  ?time                     : int option;
-  ?start_time               : int option;
-  ?end_time                 : int option;
-  ?date                     : day option;
-  ?start_date               : day option;
-  ?end_date                 : day option;
+  ?time                     : timestamp option;
+  ?start_time               : timestamp option;
+  ?end_time                 : timestamp option;
+  ?date                     : date_only option;
+  ?start_date               : date_only option;
+  ?end_date                 : date_only option;
 } <ocaml field_prefix="st_">
 
 type event = {
@@ -289,7 +290,7 @@ type event = {
   ~busy                     : bool;
   ?recurrence               : recurrence option;
   ?master_event_id          : event_id option;
-  ?original_start_time      : int option;
+  ?original_start_time      : timestamp option;
   ?status                   : event_status option;
   ?title                    : string option;
   when_ <json name="when">  : some_time
