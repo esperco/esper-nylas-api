@@ -42,6 +42,7 @@ let handle_response status headers body parse_body =
   | `Not_found, _ ->
       return None
   | `Bad_request, _ ->
+      logf `Error "Bad Nylas request. Response body: %s" body;
       failwith "Bad Nylas request"
   | err, body ->
       logf `Error "Nylas API call failed with error %d: %s\n%!"

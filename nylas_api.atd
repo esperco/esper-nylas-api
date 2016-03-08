@@ -18,10 +18,7 @@ type provider = string
 
 type email = string
 
-type timestamp = float wrap <ocaml t="Util_time.t"
-                                   wrap="Util_time.of_float"
-                                   unwrap="Util_time.to_float">
-
+type timestamp = float wrap <ocaml module="Util_time.As_unixtime">
 type date_only = string wrap <ocaml module="Util_dateonly">
 
 (** The object you get when you authenticate, containing the
