@@ -1,31 +1,24 @@
 open Log
 open Lwt
-open Cohttp
-open Cohttp.Code
-open Cohttp_lwt_unix
 
 open Nylas_api_t
-
-open Nylas_app
-
-open Nlencoding
 
 exception Error_code of Cohttp.Code.status_code
 
 (** Default URIs, suitable for hosted Nylas instances. *)
 let api_uri  = Uri.of_string "https://api.nylas.com"
 
-let api_path { api_uri } path = Uri.with_path api_uri path
+let api_path { Nylas_app.api_uri } path = Uri.with_path api_uri path
 
 let authentication_uri ?state app user_email redirect_uri =
-  let uri = Uri.with_path app.api_uri "oauth/authorize" in
+  let uri = api_path app "oauth/authorize" in
   let state =
     match state with
     | None -> []
     | Some x -> [ "state", x]
   in
   let required_param = [
-    "client_id", app.app_id;
+    "client_id", app.Nylas_app.app_id;
     "response_type", "code";
     "scope", "email";
     "login_hint", user_email;
@@ -36,17 +29,19 @@ let authentication_uri ?state app user_email redirect_uri =
 let call_string http_method ?access_token ?(headers=[]) ?body uri =
   let headers = match access_token with
     | Some token ->
-       ("Authorization", ("Basic " ^ Base64.encode (token ^ ":")))::headers
+       ("Authorization",
+        "Basic " ^ Nlencoding.Base64.encode (token ^ ":"))::headers
     | None       -> headers
   in
-  let headers = Header.of_list headers in
+  let headers = Cohttp.Header.of_list headers in
   (match body with
   | None -> return ""
   | Some b -> Cohttp_lwt_body.to_string b
   ) >>= fun b ->
   Printf.eprintf "Making Nylas API call: %s %s %s\n%!"
     (Uri.to_string uri) (Cohttp.Code.string_of_method http_method) b;
-  Client.call ~headers ?body http_method uri >>= fun (response, body) ->
+  Cohttp_lwt_unix.Client.call
+    ~headers ?body http_method uri >>= fun (response, body) ->
   match response.Cohttp.Response.status, body with
   | `OK, body ->
       Cohttp_lwt_body.to_string body >>= fun s ->
@@ -82,10 +77,10 @@ let call_parse http_method parse_fn ?access_token ?headers ?body uri =
 
 let post_authentication_code app code =
   (* NOTE: The leading slash in /oauth/token is necessary. *)
-  let base = Uri.with_path app.api_uri "/oauth/token" in
+  let base = api_path app "/oauth/token" in
   let uri  = Uri.add_query_params' base [
-      ("client_id", app.app_id);
-      ("client_secret", app.app_secret);
+      ("client_id", app.Nylas_app.app_id);
+      ("client_secret", app.Nylas_app.app_secret);
       ("grant_type", "authorization_code");
       ("code", code)
     ]
@@ -128,7 +123,7 @@ let get_raw_message_64 ~access_token ~app message_id =
 let get_raw_message ~access_token ~app message_id =
   get_raw_message_64 ~access_token ~app message_id >>= function
   | None -> return None
-  | Some { mr_rfc2822 } -> return (Some (Base64.decode mr_rfc2822))
+  | Some { mr_rfc2822 } -> return (Some (Nlencoding.Base64.decode mr_rfc2822))
 
 let get_raw_message_mime ~access_token ~app message_id =
   get_raw_message ~access_token ~app message_id >>= function
