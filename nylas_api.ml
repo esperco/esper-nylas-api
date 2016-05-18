@@ -70,7 +70,7 @@ let put_opt ?access_token ?headers ?body uri parse_body =
   handle_response status headers body parse_body
 
 let not_found_is_an_error = function
-  | None -> Http_exn.not_found "Resource not found"
+  | None -> Http_exn.not_found `Nylas_not_found "Resource not found"
   | Some x -> return x
 
 let get ?access_token ?headers uri parse_body =
