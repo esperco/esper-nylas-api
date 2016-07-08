@@ -223,7 +223,7 @@ type calendar = {
 type calendar_list = calendar list
 
 type event_participant = {
-  ?email : email option;
+  email : email;
   ?id : event_participant_id option;
   ?name : string option;
   status : reply_status;
