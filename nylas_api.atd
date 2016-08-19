@@ -285,6 +285,7 @@ type event = {
   account_id                : account_id;
   ?description              : string option;
   ?location                 : string option;
+  ?owner                    : string option;
   ~participants             : event_participant list;
   ~read_only                : bool;
   ~busy                     : bool;
