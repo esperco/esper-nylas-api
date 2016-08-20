@@ -1,3 +1,8 @@
+(*
+   Nylas API client
+*)
+
+open Printf
 open Log
 open Lwt
 
@@ -42,8 +47,18 @@ let handle_response status headers body parse_body =
   | `Not_found, _ ->
       return None
   | `Bad_request, _ ->
-      logf `Error "Bad Nylas request. Response body: %s" body;
-      failwith "Bad Nylas request"
+      (* Hopefully temporary band-aid for Nylas bug.
+         Nylas in some cases returns event IDs
+         that are rejected in other requests
+         such as bd9usrpwfh6p5r9naicge3xvp_20160826T040000Z
+         This was reported to Nylas under the subject
+         "Invalid event ID for instance of recurring event"
+      *)
+      let error_msg =
+        sprintf "Bad Nylas request. Response body: %s" body
+      in
+      Apputil_error.report_error "Bad Nylas request" error_msg >>= fun () ->
+      return None
   | err, body ->
       logf `Error "Nylas API call failed with error %d: %s\n%!"
         (Cohttp.Code.code_of_status err) body;
