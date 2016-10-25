@@ -176,4 +176,5 @@ val delta_sync_start :
 val delta_sync_update :
   access_token:string ->
   app:Nylas_app.t ->
-  ?exclude:string list -> string -> Nylas_api_t.delta_page option Lwt.t
+  ?exclude_types: Nylas_api_t.object_type list ->
+  string -> Nylas_api_t.delta_page option Lwt.t
