@@ -345,7 +345,7 @@ let delete_event ~access_token ~app event_id =
 let delta_sync_start ~access_token ~app timestamp =
   let uri = api_path app "/delta/generate_cursor" in
   let body = Nylas_api_j.string_of_start_time { start = timestamp } in
-  post_opt
+  post
     ~access_token ~body uri Nylas_api_j.cursor_response_of_string
 
 let query_of_object_types (l : Nylas_api_t.object_type list) =
