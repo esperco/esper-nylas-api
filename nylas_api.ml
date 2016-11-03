@@ -10,12 +10,28 @@ open Nylas_api_t
 
 module Http = Util_http_client
 
-exception Error_code of Cohttp.Code.status_code
-
 (** Default URIs, suitable for hosted Nylas instances. *)
 let api_uri  = Uri.of_string "https://api.nylas.com"
 
 let api_path { Nylas_app.api_uri } path = Uri.with_path api_uri path
+
+let default_report_error error_id error_details =
+  logf `Error "Nylas error %s: %s" error_id error_details;
+  return ()
+
+let default_not_found () =
+  return (Failure "Nylas resource not found")
+
+let default_other_error http_status_code response_body =
+  let msg =
+    sprintf "Nylas API call failed with error %d: %s"
+      http_status_code response_body
+  in
+  return (Failure msg)
+
+let report_error = ref default_report_error
+let not_found = ref default_not_found
+let other_error = ref default_other_error
 
 let authentication_uri ?state app user_email redirect_uri =
   let uri = api_path app "oauth/authorize" in
@@ -57,12 +73,11 @@ let handle_response status headers body parse_body =
       let error_msg =
         sprintf "Bad Nylas request. Response body: %s" body
       in
-      Apputil_error.report_error "Bad Nylas request" error_msg >>= fun () ->
+      !report_error "Bad Nylas request" error_msg >>= fun () ->
       return None
   | err, body ->
-      logf `Error "Nylas API call failed with error %d: %s\n%!"
-        (Cohttp.Code.code_of_status err) body;
-      Http_exn.service_unavailable "3rd-party service is unavailable"
+      !other_error (Cohttp.Code.code_of_status err) body >>= fun e ->
+      raise e
 
 let get_opt ?access_token ?headers uri parse_body =
   let headers = make_headers ?access_token ?headers () in
@@ -85,7 +100,7 @@ let put_opt ?access_token ?headers ?body uri parse_body =
   handle_response status headers body parse_body
 
 let not_found_is_an_error = function
-  | None -> Http_exn.not_found `Nylas_not_found "Resource not found"
+  | None -> (!not_found () >>= fun e -> raise e)
   | Some x -> return x
 
 let get ?access_token ?headers uri parse_body =
@@ -298,12 +313,12 @@ let get_calendars ~access_token ~app =
   let uri = api_path app "/calendars" in
   get_opt ~access_token uri Nylas_api_j.calendar_list_of_string
 
-let get_calendar ~access_token ~app calendar_id=
-  let uri = api_path app ("/calendars/" ^ calendar_id) in
+let get_calendar ~access_token ~app calendar_id =
+  let uri = api_path app ("/calendars/" ^ Nylas_calid.to_string calendar_id) in
   get_opt ~access_token uri Nylas_api_j.calendar_of_string
 
 let get_event ~access_token ~app event_id =
-  let uri = api_path app ("/events/" ^ event_id) in
+  let uri = api_path app ("/events/" ^ Nylas_eventid.to_string event_id) in
   get_opt ~access_token uri Nylas_api_j.event_of_string
 
 let get_events ~access_token ~app filters =
@@ -318,12 +333,12 @@ let create_event ~access_token ~app event_edit =
   post ~access_token ~body uri Nylas_api_j.event_of_string
 
 let update_event ~access_token ~app event_id event_edit =
-  let uri = api_path app ("/events/" ^ event_id) in
+  let uri = api_path app ("/events/" ^ Nylas_eventid.to_string event_id) in
   let body = Nylas_api_j.string_of_event_edit event_edit in
   put_opt ~access_token ~body uri Yojson.Safe.from_string
 
 let delete_event ~access_token ~app event_id =
-  let uri = api_path app ("/events/" ^ event_id) in
+  let uri = api_path app ("/events/" ^ Nylas_eventid.to_string event_id) in
   delete_opt ~access_token uri Yojson.Safe.from_string
 
 (* Delta Sync *)

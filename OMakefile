@@ -1,6 +1,8 @@
 OCAML_LIBS = $(OCAML_LIBS_nylas-api)
 
 FILES[] =
+  nylas_calid
+  nylas_eventid
   nylas_json
   nylas_api_t
   nylas_api_j

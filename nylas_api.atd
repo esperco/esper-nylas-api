@@ -1,5 +1,8 @@
 (* Core types for the Inbox API *)
 
+type calendar_id = string wrap <ocaml module="Nylas_calid">
+type event_id = string wrap <ocaml module="Nylas_eventid">
+
 (* TODO: wrapper types for ids and such *)
 type thread_id            = string
 type account_id           = string
@@ -7,8 +10,6 @@ type tag_id               = string
 type message_id           = string
 type draft_id             = string
 type file_id              = string
-type calendar_id          = string
-type event_id             = string
 type event_participant_id = string
 
 type access_token = string
@@ -279,9 +280,11 @@ type some_time = {
 type event = {
   ?obj <json name="object"> : object_type option;
   id                        : event_id;
-  ~calendar_id              : calendar_id;
-    (* found null for instances of recurring events 2015-12-08.
-       Working around the bug by defaulting to the empty string. *)
+  calendar_id               : calendar_id;
+    (* 2015-12-08 Found null for instances of recurring events.
+       2016-11-02 If it still happens, have Nylas fix it
+                  or make the field optional. Don't use dummy fallback.
+    *)
   account_id                : account_id;
   ?description              : string option;
   ?location                 : string option;

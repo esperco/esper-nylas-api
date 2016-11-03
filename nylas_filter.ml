@@ -37,8 +37,8 @@ type thread = [
 (** Filters for retrieving multiple calendar events. *)
 type event = [
     page
-  | `Event_id      of Nylas_api_t.event_id
-  | `Calendar_id   of Nylas_api_t.calendar_id
+  | `Event_id      of Nylas_eventid.t
+  | `Calendar_id   of Nylas_calid.t
   | `Title         of string
   | `Description   of string
   | `Location      of string
@@ -56,9 +56,11 @@ type file = [
   | `Content_type of string
 ]
 
+type filter = [ page | email | message | thread | event | file ]
+
 let to_param filter =
   let timestamp x = Printf.sprintf "%.0f" x in
-  match filter with
+  match (filter :> filter) with
   | `Limit n                  -> ("limit", string_of_int n)
   | `Offset n                 -> ("offset", string_of_int n)
 
@@ -78,8 +80,8 @@ let to_param filter =
   | `Started_before time      -> ("started_before", timestamp time)
   | `Started_after time       -> ("started_after", timestamp time)
 
-  | `Event_id id              -> ("event_id", id)
-  | `Calendar_id id           -> ("calendar_id", id)
+  | `Event_id id              -> ("event_id", Nylas_eventid.to_string id)
+  | `Calendar_id id           -> ("calendar_id", Nylas_calid.to_string id)
   | `Title title              -> ("title", title)
   | `Description description  -> ("description", description)
   | `Location location        -> ("location", location)

@@ -3,7 +3,10 @@
    Full documentation is at https://nylas.com/docs/platform
 *)
 
-exception Error_code of Cohttp.Code.status_code
+(* Hooks; subject to change. See implementation for details *)
+val report_error : (string -> string -> unit Lwt.t) ref
+val not_found : (unit -> exn Lwt.t) ref
+val other_error : (int -> string -> exn Lwt.t) ref
 
 val authentication_uri :
   ?state:string ->
@@ -144,11 +147,11 @@ val get_calendars :
 
 val get_calendar :
   access_token:string ->
-  app:Nylas_app.t -> string -> Nylas_api_t.calendar option Lwt.t
+  app:Nylas_app.t -> Nylas_calid.t -> Nylas_api_t.calendar option Lwt.t
 
 val get_event :
   access_token:string ->
-  app:Nylas_app.t -> string -> Nylas_api_t.event option Lwt.t
+  app:Nylas_app.t -> Nylas_eventid.t -> Nylas_api_t.event option Lwt.t
 
 val get_events :
   access_token:string ->
@@ -162,11 +165,12 @@ val create_event :
 val update_event :
   access_token:string ->
   app:Nylas_app.t ->
-  string -> Nylas_api_t.event_edit -> Yojson.Safe.json option Lwt.t
+  Nylas_eventid.t -> Nylas_api_t.event_edit -> Yojson.Safe.json option Lwt.t
 
 val delete_event :
   access_token:string ->
-  app:Nylas_app.t -> string -> Yojson.Safe.json option Lwt.t
+  app:Nylas_app.t ->
+  Nylas_eventid.t -> Yojson.Safe.json option Lwt.t
 
 val delta_sync_start :
   access_token:string ->
