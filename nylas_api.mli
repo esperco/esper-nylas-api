@@ -175,7 +175,7 @@ val delete_event :
 val delta_sync_start :
   access_token:string ->
   app:Nylas_app.t ->
-  Nylas_api_t.timestamp -> Nylas_api_t.cursor_response option Lwt.t
+  Util_time.t -> Nylas_api_t.cursor_response option Lwt.t
 
 val delta_sync_update :
   access_token:string ->

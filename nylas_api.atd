@@ -347,13 +347,13 @@ type delta_event = [
 type delta = {
   cursor : cursor; (* The cursor value for this delta. *)
   event : delta_event;
-  obj <json name="object"> : object_type;
+  object : object_type;
   id : string;
     (* The ID of the changed object. Its wrapper type depends on
        the object_type, so we use string here. *)
   ~attributes : (string * json) list <json repr="object">;
     (* The state of the object when the delta was generated. *)
-}
+} <ocaml field_prefix="delta_">
 
 type contact = {
   name: string;
