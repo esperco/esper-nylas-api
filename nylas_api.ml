@@ -348,8 +348,11 @@ let delta_sync_start ~access_token ~app timestamp =
   post
     ~access_token ~body uri Nylas_api_j.cursor_response_of_string
 
-let query_of_object_types (l : Nylas_api_t.object_type list) =
-  String.concat "," (BatList.map Nylas_api_j.string_of_object_type l)
+let string_of_delta_object_type (x : Nylas_api_t.delta_object_type) =
+  Util_json.string_of_json_string (Nylas_api_j.string_of_delta_object_type x)
+
+let query_of_delta_object_types (l : Nylas_api_t.delta_object_type list) =
+  String.concat "," (BatList.map string_of_delta_object_type l)
 
 let delta_sync_update ~access_token ~app ?(exclude_types = []) cursor =
   let base = api_path app "/delta" in
@@ -357,7 +360,7 @@ let delta_sync_update ~access_token ~app ?(exclude_types = []) cursor =
   let uri =
     if exclude_types = [] then with_cursor
     else
-      let filter = query_of_object_types exclude_types in
+      let filter = query_of_delta_object_types exclude_types in
       Uri.add_query_params' with_cursor ["exclude_types", filter]
   in
   get_opt ~access_token uri Nylas_api_j.delta_page_of_string

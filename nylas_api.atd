@@ -34,10 +34,19 @@ type authentication_result = {
   email_address : string;
 }
 
+(* Incomplete/undocumented list. *)
+type delta_object_type = [
+  | Thread <json name="thread">
+  | Message <json name="message">
+  | Draft <json name="draft">
+  | Calendar <json name="calendar">
+  | Event <json name="event">
+]
+
 (** An annotation that specifies what type of object the returned
     JSON represents. *)
 type object_type = [
-    Thread <json name="thread">
+  | Thread <json name="thread">
   | Message <json name="message">
   | Draft <json name="draft">
   | Account <json name="account">
