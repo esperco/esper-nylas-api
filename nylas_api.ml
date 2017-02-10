@@ -339,7 +339,9 @@ let update_event ~access_token ~app event_id event_edit =
 
 let delete_event ~access_token ~app event_id =
   let uri = api_path app ("/events/" ^ Nylas_eventid.to_string event_id) in
-  delete_opt ~access_token uri Yojson.Safe.from_string
+  delete_opt ~access_token uri (fun body -> ()) >>= function
+  | Some () -> return true
+  | None -> return false
 
 (* Delta Sync *)
 let delta_sync_start ~access_token ~app timestamp =

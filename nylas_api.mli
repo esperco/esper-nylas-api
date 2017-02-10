@@ -167,10 +167,12 @@ val update_event :
   app:Nylas_app.t ->
   Nylas_eventid.t -> Nylas_api_t.event_edit -> Yojson.Safe.json option Lwt.t
 
+(* Delete an event, returning true if the event was deleted and
+   false if the event wasn't found. *)
 val delete_event :
   access_token:string ->
   app:Nylas_app.t ->
-  Nylas_eventid.t -> Yojson.Safe.json option Lwt.t
+  Nylas_eventid.t -> bool Lwt.t
 
 val delta_sync_start :
   access_token:string ->
