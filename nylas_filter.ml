@@ -38,7 +38,7 @@ type thread = [
 type event = [
     page
   | `Event_id      of Nylas_eventid.t
-  | `Calendar_id   of Nylas_calid.t
+  | `Cal_id   of Nylas_calid.t
   | `Title         of string
   | `Description   of string
   | `Location      of string
@@ -81,7 +81,7 @@ let to_param filter =
   | `Started_after time       -> ("started_after", timestamp time)
 
   | `Event_id id              -> ("event_id", Nylas_eventid.to_string id)
-  | `Calendar_id id           -> ("calendar_id", Nylas_calid.to_string id)
+  | `Cal_id id           -> ("calendar_id", Nylas_calid.to_string id)
   | `Title title              -> ("title", title)
   | `Description description  -> ("description", description)
   | `Location location        -> ("location", location)
