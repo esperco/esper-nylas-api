@@ -5,6 +5,7 @@
 
 (* Hooks; subject to change. See implementation for details *)
 val report_error : (string -> string -> unit Lwt.t) ref
+val unauthorized : (unit -> exn Lwt.t) ref
 val not_found : (unit -> exn Lwt.t) ref
 val other_error : (int -> string -> exn Lwt.t) ref
 

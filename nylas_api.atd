@@ -25,6 +25,11 @@ type timestamp =
 
 type date_only = string wrap <ocaml module="Util_dateonly">
 
+type error_response = {
+  message: string;
+  type_ <json name="type">: string;
+}
+
 (** The object you get when you authenticate, containing the
     access_token and/or error information. *)
 type authentication_result = {

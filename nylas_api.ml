@@ -19,6 +19,9 @@ let default_report_error error_id error_details =
   logf `Error "Nylas error %s: %s" error_id error_details;
   return ()
 
+let default_unauthorized () =
+  return (Failure "Nylas access unauthorized")
+
 let default_not_found () =
   return (Failure "Nylas resource not found")
 
@@ -31,6 +34,7 @@ let default_other_error http_status_code response_body =
 
 let report_error = ref default_report_error
 let not_found = ref default_not_found
+let unauthorized = ref default_unauthorized
 let other_error = ref default_other_error
 
 let authentication_uri ?state app user_email redirect_uri =
@@ -56,6 +60,15 @@ let make_headers ?access_token ?(headers=[]) () =
        "Basic " ^ Nlencoding.Base64.encode (token ^ ":"))::headers
   | None -> headers
 
+let parse_error_response body =
+  try Some (Nylas_api_j.error_response_of_string body)
+  with _ -> None
+
+let get_error_type body =
+  match parse_error_response body with
+  | None -> None
+  | Some x -> Some x.type_
+
 let handle_response status headers body parse_body =
   match status, body with
   | `OK, body ->
@@ -75,6 +88,23 @@ let handle_response status headers body parse_body =
       in
       !report_error "Bad Nylas request" error_msg >>= fun () ->
       return None
+
+  | `Unauthorized, _ ->
+      !unauthorized () >>= fun e ->
+      raise e
+
+  | `Forbidden, body when get_error_type body = Some "invalid_request_error" ->
+      (* Nylas returns a 403 Forbidden rather then 401 Unauthorized
+         in some cases when an authentication token is invalid.
+         Ideally, we'd inspect the response body to determine whether
+         the token is invalid or if we're just trying to access a resource
+         that's off-limits to the authenticated user.
+         The response's `type` field seems to contain the
+         same value `invalid_request_error` for different types of errors,
+         so we'd have to interpret the English error message. *)
+      !unauthorized () >>= fun e ->
+      raise e
+
   | err, body ->
       !other_error (Cohttp.Code.code_of_status err) body >>= fun e ->
       raise e
