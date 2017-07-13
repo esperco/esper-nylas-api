@@ -69,6 +69,28 @@ let get_error_type body =
   | None -> None
   | Some x -> Some x.type_
 
+(*
+   Inspect error response to determine if it should be handled
+   as a 401 instead of a 403.
+   This is very brittle.
+*)
+let is_unauthorized_response body =
+  match parse_error_response body with
+  | Some x ->
+      if x.type_ = "invalid_request_error" then
+        match x.message with
+        | "Account cancelled or trial expired"
+        | "This action can't be performed because the account's \
+           credentials are out of date. \
+           Please reauthenticate and try again." ->
+            true
+        | _ ->
+            false
+      else
+        false
+  | None ->
+      false
+
 let handle_response status headers body parse_body =
   match status, body with
   | `OK, body ->
@@ -93,15 +115,7 @@ let handle_response status headers body parse_body =
       !unauthorized () >>= fun e ->
       raise e
 
-  | `Forbidden, body when get_error_type body = Some "invalid_request_error" ->
-      (* Nylas returns a 403 Forbidden rather then 401 Unauthorized
-         in some cases when an authentication token is invalid.
-         Ideally, we'd inspect the response body to determine whether
-         the token is invalid or if we're just trying to access a resource
-         that's off-limits to the authenticated user.
-         The response's `type` field seems to contain the
-         same value `invalid_request_error` for different types of errors,
-         so we'd have to interpret the English error message. *)
+  | `Forbidden, body when is_unauthorized_response body ->
       !unauthorized () >>= fun e ->
       raise e
 
