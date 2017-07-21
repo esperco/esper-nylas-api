@@ -91,14 +91,23 @@ let is_unauthorized_response body =
   | None ->
       false
 
+let is_invalid_id body =
+  match parse_error_response body with
+  | Some x ->
+      x.type_ = "invalid_request_error" &&
+      BatString.starts_with x.message "Invalid id: "
+  | None ->
+      false
+
 let handle_response status headers body parse_body =
   match status, body with
   | `OK, body ->
       return (Some (parse_body body))
   | `Not_found, _ ->
       return None
-  | `Bad_request, _ ->
-      (* Hopefully temporary band-aid for Nylas bug.
+  | `Bad_request, body when is_invalid_id body ->
+      (*
+         Hopefully temporary band-aid for Nylas bug.
          Nylas in some cases returns event IDs
          that are rejected in other requests
          such as bd9usrpwfh6p5r9naicge3xvp_20160826T040000Z
@@ -106,9 +115,9 @@ let handle_response status headers body parse_body =
          "Invalid event ID for instance of recurring event"
       *)
       let error_msg =
-        sprintf "Bad Nylas request. Response body: %s" body
+        sprintf "Invalid Nylas event ID. Response body: %s" body
       in
-      !report_error "Bad Nylas request" error_msg >>= fun () ->
+      !report_error "Invalid Nylas event ID" error_msg >>= fun () ->
       return None
 
   | `Unauthorized, _ ->
